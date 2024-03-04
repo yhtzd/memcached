@@ -536,7 +536,7 @@ void redispatch_conn(conn *c) {
     }
 #endif
     c->state = conn_new_cmd;
-    thread_spawn(drive_machine, c);
+    sl_task_spawn(drive_machine, c, 0);
 }
 
 /* This misses the allow_new_conns flag :( */
@@ -554,7 +554,7 @@ void sidethread_conn_close(conn *c) {
     return;
 #endif
     c->state = conn_closing;
-    thread_spawn(drive_machine, c);
+    sl_task_spawn(drive_machine, c, 0);
 }
 
 

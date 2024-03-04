@@ -196,7 +196,7 @@ static volatile int do_run_maintenance_thread = 1;
 #define DEFAULT_HASH_BULK_MOVE 1
 int hash_bulk_move = DEFAULT_HASH_BULK_MOVE;
 
-static void assoc_maintenance_thread(void *arg) {
+static void* assoc_maintenance_thread(void *arg) {
     mutex_lock(&maintenance_lock);
     while (do_run_maintenance_thread) {
         int ii = 0;
@@ -260,6 +260,7 @@ static void assoc_maintenance_thread(void *arg) {
         }
     }
     waitgroup_done(&assoc_maintenance_thread_wg);
+    return 0;
 }
 
 
@@ -275,7 +276,7 @@ int start_assoc_maintenance_thread() {
     waitgroup_init(&assoc_maintenance_thread_wg);
     waitgroup_add(&assoc_maintenance_thread_wg, 1);
     mutex_init(&maintenance_lock);
-    if ((ret = thread_spawn(assoc_maintenance_thread, NULL)) != 0) {
+    if ((ret = sl_task_spawn(assoc_maintenance_thread, NULL, 0)) != 0) {
         fprintf(stderr, "Can't create thread: %s\n", strerror(ret));
         waitgroup_done(&assoc_maintenance_thread_wg);
         return -1;

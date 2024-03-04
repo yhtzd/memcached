@@ -236,53 +236,53 @@ AC_SEARCH_LIBS(clock_gettime, rt)
 AC_SEARCH_LIBS(socket, socket)
 AC_SEARCH_LIBS(gethostbyname, nsl)
 
-tryshenangodir=""
-AC_ARG_WITH(shenango,
-       [  --with-shenango=PATH     Specify path to shenango installation ],
-       [
-                if test "x$withval" != "xno" ; then
-                        tryshenangodir=$withval
-                fi
-       ]
+PKG_CHECK_MODULES(LIBDPDK, libdpdk)
+CPPFLAGS="$CPPFLAGS $LIBDPDK_CFLAGS"
+
+AC_SEARCH_LIBS(numa_node_of_cpu, numa)
+
+tryskyloftdir=""
+AC_ARG_WITH(skyloft,
+  [ --with-skyloft=PATH Specify path to skyloft installation ],
+  [
+    if test "x$withval" != "xno" ; then
+      tryskyloftdir=$withval
+    fi
+  ]
 )
 
 dnl ------------------------------------------------------
-
-AC_CACHE_CHECK([for shenango directory], ac_cv_shenango_dir, [
+AC_CACHE_CHECK([for skyloft directory], ac_cv_skyloft_dir, [
   saved_LIBS="$LIBS"
   saved_LDFLAGS="$LDFLAGS"
   saved_CPPFLAGS="$CPPFLAGS"
   le_found=no
-  for ledir in $tryshenangodir "" $prefix /usr/local ; do
+  for ledir in $tryskyloftdir "" $prefix /usr/local ; do
     LDFLAGS="$saved_LDFLAGS"
-    LIBS="-lruntime -lnet -lbase $saved_LIBS"
+    LIBS="$ledir/lib/libskyloft.a $ledir/lib/libutils.a $LIBDPDK_LIBS $saved_LIBS"
 
     # Skip the directory if it isn't there.
     if test ! -z "$ledir" -a ! -d "$ledir" ; then
        continue;
     fi
     if test ! -z "$ledir" ; then
-      if test -d "$ledir/lib" ; then
-        LDFLAGS="-L$ledir/lib -T $ledir/base/base.ld $LDFLAGS"
-      else
-        LDFLAGS="-L$ledir -T $ledir/base/base.ld $LDFLAGS"
-      fi
-      if test -d "$ledir/inc" ; then
-        CPPFLAGS="-I$ledir/inc $CPPFLAGS"
-      else
-        CPPFLAGS="-I$ledir $CPPFLAGS"
-      fi
+        LDFLAGS="-Wl,--wrap=exit -T $ledir/lib/libos.ld $LDFLAGS"
+        CPPFLAGS="-I$ledir/include $CPPFLAGS"
     fi
-    # Can I compile and link it?
-    AC_TRY_LINK([#include <sys/time.h>
-#include <sys/types.h>
-#include <runtime/thread.h>], [ thread_yield() ],
-       [ shenango_linked=yes ], [ shenango_linked=no ])
-    if test $shenango_linked = yes; then
+    AC_TRY_LINK(
+      [
+        #include <sys/time.h>
+        #include <sys/types.h>
+        #include <skyloft/uapi/task.h>
+      ],
+      [ sl_task_yield() ],
+      [ skyloft_linked=yes ],
+      [ skyloft_linked=no ])
+    if test $skyloft_linked = yes; then
        if test ! -z "$ledir" ; then
-         ac_cv_shenango_dir=$ledir
+         ac_cv_skyloft_dir=$ledir
        else
-         ac_cv_shenango_dir="(system)"
+         ac_cv_skyloft_dir="(system)"
        fi
        le_found=yes
        break
@@ -292,25 +292,16 @@ AC_CACHE_CHECK([for shenango directory], ac_cv_shenango_dir, [
   LDFLAGS="$saved_LDFLAGS"
   CPPFLAGS="$saved_CPPFLAGS"
   if test $le_found = no ; then
-    AC_MSG_ERROR([shenango is required. 
+    AC_MSG_ERROR([skyloft is required. If it's already installed, specify its path using --with-skyloft=/dir/ ])
+  fi
+])
 
-      If it's already installed, specify its path using --with-shenango=/dir/
-])
-  fi
-])
-LIBS="-lruntime -lnet -lbase $LIBS"
-if test $ac_cv_shenango_dir != "(system)"; then
-  if test -d "$ac_cv_shenango_dir/lib" ; then
-    LDFLAGS="-L$ac_cv_shenango_dir/lib -no-pie -T $ac_cv_shenango_dir/base/base.ld $LDFLAGS"
-    le_libdir="$ac_cv_shenango_dir/lib"
-  else
-    LDFLAGS="-L$ac_cv_shenango_dir -no-pie -T $ac_cv_shenango_dir/base/base.ld $LDFLAGS"
-    le_libdir="$ac_cv_shenango_dir"
-  fi
-  if test -d "$ac_cv_shenango_dir/inc" ; then
-    CPPFLAGS="-I$ac_cv_shenango_dir/inc $CPPFLAGS"
-  else
-    CPPFLAGS="-I$ac_cv_shenango_dir $CPPFLAGS"
+LIBS="$ledir/lib/libskyloft.a $ledir/lib/libutils.a $LIBDPDK_LIBS $LIBS"
+if test "x$ac_cv_skyloft_dir" != "x(system)"; then
+  LDFLAGS="-Wl,--wrap=exit -T $ac_cv_skyloft_dir/lib/libos.ld $LDFLAGS"
+  
+  if test -d "$ac_cv_skyloft_dir/include" ; then
+    CPPFLAGS="-I$ac_cv_skyloft_dir/include $CPPFLAGS"
   fi
 fi
 

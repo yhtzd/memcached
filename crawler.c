@@ -314,7 +314,7 @@ static int lru_crawler_poll(crawler_client_t *c) {
             if (IS_UDP(((conn *)c->c)->transport)) {
                 int ret, tosend, done = 0;
                 do {
-                    tosend = min(data_size - done, UDP_MAX_PAYLOAD);
+                    tosend = MIN(data_size - done, UDP_MAX_PAYLOAD);
                     ret = udp_respond(data + done, tosend, ((conn *)c->c)->spawn_data);
                     if (ret > 0)
                         total += ret;
@@ -375,7 +375,7 @@ static void lru_crawler_class_done(int i) {
         active_crawler_mod.mod->doneclass(&active_crawler_mod, i);
 }
 
-static void item_crawler_thread(void *arg) {
+static void* item_crawler_thread(void *arg) {
     int i;
     int crawls_persleep = settings.crawls_persleep;
 
@@ -487,6 +487,7 @@ static void item_crawler_thread(void *arg) {
         fprintf(stderr, "LRU crawler thread stopping\n");
 
     waitgroup_done(&item_crawler_wg);
+    return 0;
 }
 
 
@@ -520,7 +521,7 @@ int start_item_crawler_thread(void) {
     do_run_lru_crawler_thread = 1;
     waitgroup_init(&item_crawler_wg);
     waitgroup_add(&item_crawler_wg, 1);
-    if ((ret = thread_spawn(item_crawler_thread, NULL)) != 0) {
+    if ((ret = sl_task_spawn(item_crawler_thread, NULL, 0)) != 0) {
         fprintf(stderr, "Can't create LRU crawler thread: %s\n",
             strerror(ret));
         mutex_unlock(&lru_crawler_lock);

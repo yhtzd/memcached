@@ -382,7 +382,7 @@ static int flush_udp(unsigned char *data, unsigned int data_size, conn *c)
 {
     int total = data_size, ret, tosend, done = 0;
     do {
-        tosend = min(data_size - done, UDP_MAX_PAYLOAD);
+        tosend = MIN(data_size - done, UDP_MAX_PAYLOAD);
         ret = udp_respond(data + done, tosend, c->spawn_data);
         if (ret < 0 || ret != tosend) {
             total = ret;
@@ -525,7 +525,7 @@ static void logger_thread_sum_stats(struct logger_stats *ls) {
 #define MIN_LOGGER_SLEEP 1000
 
 /* Primary logger thread routine */
-static void logger_thread(void *arg) {
+static void* logger_thread(void *arg) {
     useconds_t to_sleep = MIN_LOGGER_SLEEP;
     L_DEBUG("LOGGER: Starting logger thread\n");
     while (do_run_logger_thread) {
@@ -563,6 +563,7 @@ static void logger_thread(void *arg) {
     }
 
     waitgroup_done(&logger_wg);
+    return 0;
 }
 
 int start_logger_thread(void) {
@@ -570,7 +571,7 @@ int start_logger_thread(void) {
     do_run_logger_thread = 1;
     waitgroup_init(&logger_wg);
     waitgroup_add(&logger_wg, 1);
-    if ((ret = thread_spawn(logger_thread, NULL)) != 0) {
+    if ((ret = sl_task_spawn(logger_thread, NULL, 0)) != 0) {
         fprintf(stderr, "Can't start logger thread: %s\n", strerror(ret));
         waitgroup_done(&logger_wg);
         return -1;

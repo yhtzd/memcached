@@ -1530,7 +1530,7 @@ slab_automove_reg_t slab_automove_extstore = {
 #define MAX_LRU_MAINTAINER_SLEEP 1000000
 #define MIN_LRU_MAINTAINER_SLEEP 1000
 
-static void lru_maintainer_thread(void *arg) {
+static void* lru_maintainer_thread(void *arg) {
     slab_automove_reg_t *sam = &slab_automove_default;
 #ifdef EXTSTORE
     void *storage = arg;
@@ -1664,7 +1664,7 @@ static void lru_maintainer_thread(void *arg) {
         fprintf(stderr, "LRU maintainer thread stopping\n");
 
     waitgroup_done(&lru_maintainer_thread_wg);
-
+    return 0;
 }
 
 int stop_lru_maintainer_thread(void) {
@@ -1686,7 +1686,7 @@ int start_lru_maintainer_thread(void *arg) {
     settings.lru_maintainer_thread = true;
     waitgroup_init(&lru_maintainer_thread_wg);
     waitgroup_add(&lru_maintainer_thread_wg, 1);
-    if ((ret = thread_spawn(lru_maintainer_thread, arg)) != 0) {
+    if ((ret = sl_task_spawn(lru_maintainer_thread, arg, 0)) != 0) {
         fprintf(stderr, "Can't create LRU maintainer thread: %s\n",
             strerror(ret));
         mutex_unlock(&lru_maintainer_lock);

@@ -19,7 +19,7 @@
 extern int cache_error;
 #endif
 
-#include "runtime.h"
+#include "skyloft.h"
 
 /**
  * Constructor used to initialize allocated objects
