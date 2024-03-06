@@ -14,7 +14,6 @@
  *      Brad Fitzpatrick <brad@danga.com>
  */
 #include "memcached.h"
-#include "skyloft/uapi/task.h"
 
 #ifdef EXTSTORE
 #include "storage.h"
@@ -6422,12 +6421,6 @@ static void remove_pidfile(const char *pid_file)
     }
 }
 
-static void sig_handler(const int sig)
-{
-    printf("Signal handled: %s.\n", strsignal(sig));
-    exit(EXIT_SUCCESS);
-}
-
 // #ifndef HAVE_SIGIGNORE
 static int __sigignore(int sig)
 {
@@ -7855,33 +7848,22 @@ int main(int argc, char **argv)
 {
     int ret;
 
-    if (argc < 2) {
-        printf("arg must be config file\n");
-        return -EINVAL;
-    }
-
     /* init settings */
     settings_init();
-
-    /* handle SIGINT and SIGTERM */
-    signal(SIGINT, sig_handler);
-    signal(SIGTERM, sig_handler);
 
     /* set stderr non-buffering (for running under, say, daemontools) */
     setbuf(stderr, NULL);
 
-    argv[1] = argv[0];
-
-    arg_parse(argv + 1);
+    arg_parse(argv);
 
     validate_settings();
 
     ret = sl_set_initializers(memcached_init, perthread_initializer, late_initializer);
     BUG_ON(ret);
 
-    ret = sl_libos_start(memcached_main, argv + 1);
+    ret = sl_libos_start(memcached_main, argv);
     if (ret) {
-        printf("failed to start runtime\n");
+        printf("failed to start\n");
         return ret;
     }
 
