@@ -7767,7 +7767,7 @@ static void *memcached_main(void *arg)
     if (settings.udpport) {
         struct netaddr l_udp = {.ip = 0, .port = settings.udpport};
 
-        udpspawner_t *spawner;
+        udp_spawner_t *spawner;
         ret = udp_create_spawner(l_udp, udp_handler, &spawner);
         BUG_ON(ret);
     }
