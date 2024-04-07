@@ -1137,7 +1137,7 @@ static void slab_rebalance_finish(void) {
 /* Slab mover thread.
  * Sits waiting for a condition to jump off and shovel some memory about
  */
-static void* slab_rebalance_thread(void *arg) {
+static void slab_rebalance_thread(void *arg) {
     int was_busy = 0;
     /* So we first pass into cond_wait with the mutex held */
     mutex_lock(&slabs_rebalance_lock);
@@ -1168,7 +1168,6 @@ static void* slab_rebalance_thread(void *arg) {
         }
     }
     waitgroup_done(&slab_thread_wg);
-    return 0;
 }
 
 /* Iterate at most once through the slab classes and pick a "random" source.

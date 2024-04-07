@@ -334,7 +334,7 @@ static uint64_t nactiveconns;
 
 #define CONNS_PER_SLICE 100
 
-static void *conn_timeout_thread(void *arg)
+static void conn_timeout_thread(void *arg)
 {
     int i;
     conn *c;
@@ -394,7 +394,6 @@ static void *conn_timeout_thread(void *arg)
     }
 
     mutex_unlock(&tcp_conn_lock);
-    return 0;
 }
 
 #if 0
@@ -5368,7 +5367,7 @@ static int read_into_chunked_item(conn *c)
     return total;
 }
 
-void *drive_machine(void *arg)
+void drive_machine(void *arg)
 {
     conn *c = arg;
     bool stop = false;
@@ -5684,8 +5683,7 @@ void *drive_machine(void *arg)
         case conn_watch:
             /* We handed off our connection to the logger thread. */
             stop = true;
-            return 0;
-
+            return;
         case conn_max_state:
             BUG();
             break;
@@ -5694,11 +5692,9 @@ void *drive_machine(void *arg)
 
     BUG_ON(c->state != conn_closing);
     conn_close(c);
-
-    return 0;
 }
 
-static void *handle_tcp_conn(void *arg)
+static void handle_tcp_conn(void *arg)
 {
     tcp_conn_t *tconn = arg;
     conn *c = conn_new(conn_read, DATA_BUFFER_SIZE, tcp_transport);
@@ -5721,13 +5717,9 @@ static void *handle_tcp_conn(void *arg)
     mutex_unlock(&tcp_conn_lock);
 
     drive_machine(c);
-
-    return 0;
-
 abort_conn:
     tcp_abort(tconn);
     tcp_close(tconn);
-    return (void *)-1;
 }
 
 static void udp_handler(struct udp_spawn_data *d)
@@ -6156,7 +6148,7 @@ volatile rel_time_t current_time;
  * from jitter, simply ticking our internal timer here is accurate enough.
  * Note that users who are setting explicit dates for expiration times *must*
  * ensure their clocks are correct before starting memcached. */
-static void *clock_thread(void *arg)
+static void clock_thread(void *arg)
 {
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
     static bool monotonic = false;
@@ -6188,7 +6180,6 @@ static void *clock_thread(void *arg)
             current_time = (rel_time_t)(tv.tv_sec - process_started);
         }
     }
-    return 0;
 }
 
 static void usage(void)
@@ -7400,7 +7391,7 @@ static void arg_parse(void *arg)
 }
 
 static int memcached_init(void);
-static void *memcached_main(void *arg);
+static void memcached_main(void *arg);
 
 static void validate_settings(void)
 {
@@ -7622,7 +7613,7 @@ static int memcached_init(void)
     return 0;
 }
 
-static void *memcached_main(void *arg)
+static void memcached_main(void *arg)
 {
     int ret;
     /* initialize other stuff */

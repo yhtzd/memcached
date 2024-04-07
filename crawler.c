@@ -375,7 +375,7 @@ static void lru_crawler_class_done(int i) {
         active_crawler_mod.mod->doneclass(&active_crawler_mod, i);
 }
 
-static void* item_crawler_thread(void *arg) {
+static void item_crawler_thread(void *arg) {
     int i;
     int crawls_persleep = settings.crawls_persleep;
 
@@ -487,7 +487,6 @@ static void* item_crawler_thread(void *arg) {
         fprintf(stderr, "LRU crawler thread stopping\n");
 
     waitgroup_done(&item_crawler_wg);
-    return 0;
 }
 
 

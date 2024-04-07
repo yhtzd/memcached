@@ -525,7 +525,7 @@ static void logger_thread_sum_stats(struct logger_stats *ls) {
 #define MIN_LOGGER_SLEEP 1000
 
 /* Primary logger thread routine */
-static void* logger_thread(void *arg) {
+static void logger_thread(void *arg) {
     useconds_t to_sleep = MIN_LOGGER_SLEEP;
     L_DEBUG("LOGGER: Starting logger thread\n");
     while (do_run_logger_thread) {
@@ -563,7 +563,6 @@ static void* logger_thread(void *arg) {
     }
 
     waitgroup_done(&logger_wg);
-    return 0;
 }
 
 int start_logger_thread(void) {

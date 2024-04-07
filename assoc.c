@@ -196,7 +196,7 @@ static volatile int do_run_maintenance_thread = 1;
 #define DEFAULT_HASH_BULK_MOVE 1
 int hash_bulk_move = DEFAULT_HASH_BULK_MOVE;
 
-static void* assoc_maintenance_thread(void *arg) {
+static void assoc_maintenance_thread(void *arg) {
     mutex_lock(&maintenance_lock);
     while (do_run_maintenance_thread) {
         int ii = 0;
@@ -260,7 +260,6 @@ static void* assoc_maintenance_thread(void *arg) {
         }
     }
     waitgroup_done(&assoc_maintenance_thread_wg);
-    return 0;
 }
 
 
